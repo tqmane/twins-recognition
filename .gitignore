@@ -1,0 +1,54 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*.so
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Test / coverage caches
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.cache/
+
+# IDE/editor
+*.swp
+*.idea/
+.vscode/
+
+# Logs
+*.log
+
+# OS miscellany
+.DS_Store
+Thumbs.db
+
+# Runtime outputs (app execution)
+# CLI/Webで生成しがちな結果ファイル・一時ファイル
+result.json
+results.json
+results.csv
+result-*.json
+result-*.csv
+*.tmp
+*.bak
+
+# Optional local output directories (if you choose to store runs here)
+outputs/
+runs/
+reports/
+
+# Temp uploads (webapp) - usually under system temp, ignore here in case created locally
+twins_uploads/
+uploads/
+instance/

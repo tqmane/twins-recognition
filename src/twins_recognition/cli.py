@@ -9,6 +9,7 @@ import os
 from typing import List
 
 from .processor import analyze_image
+from typing import Dict
 
 try:
     from PIL import Image  # Pillow がサポートする拡張を利用
@@ -63,16 +64,39 @@ def main():
         imgs = collect_images(args.folder)
         analyses = [analyze_image(p) for p in imgs]
 
-    # 通常JSON
+    # 通常JSON（日本語ラベルも付与）
+    def ja_label(label: str) -> str:
+        return {
+            'twins': '双子',
+            'siblings': '兄弟/姉妹/兄妹/姉弟',
+            'similar': '類似',
+            'different': '異なる',
+            'single_person': '単一人物',
+            'no_face': '顔未検出',
+        }.get(label, label)
+
     out = [a.to_dict() for a in analyses]
+    for item in out:
+        cls = item.get('classification', {})
+        if 'label' in cls:
+            cls['label_ja'] = ja_label(cls['label'])
 
     if args.brief:
         # label 距離(3桁) faces path
+        def ja_label_brief(label: str) -> str:
+            return {
+                'twins': '双子',
+                'siblings': '兄弟/姉妹/兄妹/姉弟',
+                'similar': '類似',
+                'different': '異なる',
+                'single_person': '単一人物',
+                'no_face': '顔未検出',
+            }.get(label, label)
         for a in analyses:
             cls = a.classification
             dist = cls.distance
             dist_str = f"{dist:.3f}" if dist is not None else "-"
-            print(f"{cls.label}\t{dist_str}\t{len(a.faces)}\t{a.path}")
+            print(f"{ja_label_brief(cls.label)}\t{dist_str}\t{len(a.faces)}\t{a.path}")
     else:
         text = json.dumps(out, ensure_ascii=False, indent=2 if args.pretty else None)
         print(text)
@@ -87,7 +111,15 @@ def main():
         total = sum(c.values()) or 1
         print("\n# summary")
         for label, cnt in c.items():
-            print(f"{label}: {cnt} ({cnt/total*100:.1f}%)")
+            shown = {
+                'twins': '双子',
+                'siblings': '兄弟/姉妹/兄妹/姉弟',
+                'similar': '類似',
+                'different': '異なる',
+                'single_person': '単一人物',
+                'no_face': '顔未検出',
+            }.get(label, label)
+            print(f"{shown}: {cnt} ({cnt/total*100:.1f}%)")
         # 平均距離 (twins/siblings/similar/different のみ)
         dists = [a.classification.distance for a in analyses if a.classification.distance is not None]
         if dists:

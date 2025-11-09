@@ -18,6 +18,20 @@ THUMB_DIRNAME = "thumbs"
 os.makedirs(UPLOAD_ROOT, exist_ok=True)
 
 
+# 日本語表示用ラベルフィルタ（siblings を 兄弟/姉妹/兄妹/姉弟 として表示）
+def ja_label(label: str) -> str:
+    return {
+        'twins': '双子',
+        'siblings': '兄弟/姉妹/兄妹/姉弟',
+        'similar': '類似',
+        'different': '異なる',
+        'single_person': '単一人物',
+        'no_face': '顔未検出',
+    }.get(label, label)
+
+app.jinja_env.filters['ja_label'] = ja_label
+
+
 def ensure_dir(path: str):
     os.makedirs(path, exist_ok=True)
 
@@ -64,6 +78,12 @@ def analyze():
         # 解析実行
         a = analyze_image(save_path)
         d = a.to_dict()
+        # 日本語ラベル付与
+        try:
+            raw = d.get("classification", {}).get("label")
+            d["classification"]["label_ja"] = ja_label(raw)
+        except Exception:
+            pass
         # サムネイル
         thumb_name = f"{os.path.basename(save_path)}.thumb.jpg"
         thumb_path = os.path.join(thumbs, thumb_name)
@@ -92,13 +112,13 @@ def analyze():
     with open(results_json_path, "w", encoding="utf-8") as f:
         json.dump({"results": results, "summary": summary}, f, ensure_ascii=False, indent=2)
 
-    # CSV も保存
+    # CSV も保存（ラベルは日本語で出力）
     results_csv_path = os.path.join(tmpdir, "results.csv")
     with open(results_csv_path, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["file", "label", "distance", "faces", "abs_path"])
         for r in results:
-            label = r.get("classification", {}).get("label")
+            label = ja_label(r.get("classification", {}).get("label"))
             dist = r.get("classification", {}).get("distance")
             faces_cnt = len(r.get("faces", []))
             writer.writerow([
@@ -178,8 +198,8 @@ def reset(batch: str):
 
 
 def run():
-    # Flask 起動（デフォルト: http://127.0.0.1:5000）
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    # Flask 起動（0.0.0.0:5000で待ち受け、外部アクセスを許可）
+    app.run(host="0.0.0.0", port=5000, debug=False)
 
 
 # --- 新規: アップロードと逐次処理（SSE） ---
@@ -226,6 +246,11 @@ def process_stream(batch: str):
                 make_thumb(path, thumb_path, faces=d.get('faces'))
                 d["thumb_url"] = f"/static_tmp/{batch}/{THUMB_DIRNAME}/{thumb_name}"
                 d["relpath"] = f"/static_tmp/{batch}/{name}"
+                try:
+                    raw = d.get("classification", {}).get("label")
+                    d["classification"]["label_ja"] = ja_label(raw)
+                except Exception:
+                    pass
                 results.append(d)
                 # 進捗通知
                 pct = int(idx / max(total, 1) * 100)
@@ -259,7 +284,7 @@ def process_stream(batch: str):
             writer = csv.writer(f)
             writer.writerow(["file", "label", "distance", "faces", "abs_path"])
             for r in results:
-                label = r.get("classification", {}).get("label")
+                label = ja_label(r.get("classification", {}).get("label"))
                 dist = r.get("classification", {}).get("distance")
                 faces_cnt = len(r.get("faces", []))
                 writer.writerow([os.path.basename(r.get("path", "")), label, ("" if dist is None else round(dist, 3)), faces_cnt, r.get("path", "")])

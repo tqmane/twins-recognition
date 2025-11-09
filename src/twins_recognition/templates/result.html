@@ -27,7 +27,7 @@
     <h2>サマリー</h2>
     <ul>
       {% for label, cnt in summary.counts.items() %}
-        <li>{{ label }}: {{ cnt }} ({{ (cnt/summary.total*100)|round(1) }}%)</li>
+        <li>{{ label|ja_label }}: {{ cnt }} ({{ (cnt/summary.total*100)|round(1) }}%)</li>
       {% endfor %}
       <li>総画像枚数: {{ summary.total }}</li>
       {% if summary.mean_distance %}<li>平均距離: {{ summary.mean_distance }}</li>{% endif %}
@@ -55,7 +55,7 @@
     {% for r in results %}
       <tr>
         <td><a href="{{ r.relpath }}" target="_blank">{{ r.path.split('/')[-1] }}</a></td>
-        <td><span class="badge label-{{ r.classification.label }}">{{ r.classification.label }}</span></td>
+  <td><span class="badge label-{{ r.classification.label }}">{{ r.classification.label|ja_label }}</span></td>
         <td>{% if r.classification.distance is not none %}{{ '%.3f'|format(r.classification.distance) }}{% else %}-{% endif %}</td>
         <td>{{ r.faces|length }}</td>
       </tr>
@@ -67,9 +67,9 @@
   <div class="grid">
     {% for r in results %}
       <div class="item">
-        <img src="{{ r.thumb_url }}" alt="thumb" title="{{ r.classification.label }}{% if r.classification.distance is not none %} {{ '%.3f'|format(r.classification.distance) }}{% endif %} · faces={{ r.faces|length }}" />
+  <img src="{{ r.thumb_url }}" alt="thumb" title="{{ r.classification.label|ja_label }}{% if r.classification.distance is not none %} {{ '%.3f'|format(r.classification.distance) }}{% endif %} · faces={{ r.faces|length }}" />
         <div style="margin-top:4px;">
-          <span class="badge label-{{ r.classification.label }}">{{ r.classification.label }}</span>
+          <span class="badge label-{{ r.classification.label }}">{{ r.classification.label|ja_label }}</span>
           {% if r.classification.distance is not none %}<span style="font-size:0.7rem;">{{ '%.3f'|format(r.classification.distance) }}</span>{% endif %}
         </div>
       </div>

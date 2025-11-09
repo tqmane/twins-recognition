@@ -8,6 +8,16 @@ from typing import List
 from .processor import analyze_image
 from .cli import collect_images
 
+def ja_label(label: str) -> str:
+    return {
+        'twins': '双子',
+        'siblings': '兄弟/姉妹/兄妹/姉弟',
+        'similar': '類似',
+        'different': '異なる',
+        'single_person': '単一人物',
+        'no_face': '顔未検出',
+    }.get(label, label)
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -59,7 +69,8 @@ class App(tk.Tk):
                 try:
                     a = analyze_image(p)
                     dist = a.classification.distance
-                    self.tree.insert("", tk.END, values=(a.classification.label, f"{dist:.3f}" if dist else "-", len(a.faces)))
+                    shown = ja_label(a.classification.label)
+                    self.tree.insert("", tk.END, values=(shown, f"{dist:.3f}" if dist else "-", len(a.faces)))
                 except Exception as e:
                     self.tree.insert("", tk.END, values=(f"error:{e}", "-", "-"))
             self.status.set("完了")
