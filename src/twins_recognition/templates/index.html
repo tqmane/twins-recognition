@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Twins Recognition Upload</title>
+  <style>
+    body { font-family: sans-serif; margin: 1.5rem; }
+    .upload-box { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; }
+    input[type=file] { width: 100%; }
+    button { padding: 0.6rem 1.2rem; }
+    .drop-area { border: 2px dashed #999; border-radius: 8px; padding: 1.2rem; text-align: center; color:#555; cursor: pointer; }
+    .drop-area.dragover { background: #f0faff; border-color: #007acc; color:#007acc; }
+    .progress { margin-top: 1rem; }
+    .hint { color:#666; font-size:0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Twins Recognition (Web)</h1>
+  <div class="upload-box">
+    <form id="form" action="/upload" method="post" enctype="multipart/form-data">
+      <p>複数画像を選択またはドラッグ&ドロップしてください:</p>
+      <div id="drop" class="drop-area">
+        ここにファイルをドロップ<br/>
+        <span class="hint">クリックでも選択できます</span>
+      </div>
+      <input id="files" type="file" name="files" multiple accept="image/*" style="display:none;" />
+      <div class="progress">
+        <label for="prog">アップロード進捗:</label>
+        <progress id="prog" max="100" value="0" style="width:100%;"></progress>
+        <div id="status" class="hint"></div>
+      </div>
+      <p style="margin-top:1rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button id="submitBtn" type="submit">解析する</button>
+        <button id="clearBtn" type="button">選択を解除</button>
+      </p>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('files');
+    const drop = document.getElementById('drop');
+    const prog = document.getElementById('prog');
+    const status = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+
+    function send() {
+      const files = input.files;
+      if (!files || files.length === 0) {
+        alert('ファイルを選択してください');
+        return;
+      }
+      const fd = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        fd.append('files', files[i], files[i].name);
+      }
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', form.action);
+  xhr.responseType = 'json';
+      prog.value = 0; status.textContent = 'アップロード中...'; submitBtn.disabled = true;
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const p = Math.round(e.loaded / e.total * 100);
+          prog.value = p;
+          status.textContent = `アップロード ${p}%`;
+        }
+      };
+      xhr.onload = () => {
+        try {
+          const res = xhr.response || JSON.parse(xhr.responseText);
+          if (!res || !res.batch) throw new Error('invalid response');
+          status.textContent = '解析中...';
+          prog.value = 0;
+          const es = new EventSource(`/process/${res.batch}/stream`);
+          es.addEventListener('progress', (e) => {
+            try {
+              const d = JSON.parse(e.data);
+              prog.value = d.pct || 0;
+              const info = [
+                `解析 ${d.index}/${d.total}`,
+                d.filename ? `: ${d.filename}` : '',
+                d.label ? ` · ${d.label}` : '',
+                (d.distance!=null) ? ` ${Number(d.distance).toFixed(3)}` : ''
+              ].join('');
+              status.textContent = info;
+            } catch {}
+          });
+          es.addEventListener('done', (e) => {
+            try { const d = JSON.parse(e.data); if (d.url) window.location = d.url; } catch { window.location = '/'; }
+            es.close();
+          });
+          es.onerror = () => { es.close(); window.location = '/'; };
+        } catch (err) {
+          alert('解析開始に失敗しました');
+          submitBtn.disabled = false;
+        }
+      };
+      xhr.onerror = () => {
+        submitBtn.disabled = false;
+        alert('アップロードに失敗しました');
+      };
+      status.textContent = 'アップロード開始';
+      xhr.send(fd);
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      send();
+    });
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault(); drop.classList.remove('dragover');
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        input.files = dt.files;
+        status.textContent = `${dt.files.length} ファイル選択`; prog.value = 0;
+      }
+    });
+    clearBtn.addEventListener('click', () => {
+      // ファイル選択解除: DataTransfer経由で空集合を適用
+      const dt = new DataTransfer();
+      input.files = dt.files;
+      prog.value = 0;
+      status.textContent = '選択を解除しました';
+      submitBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>

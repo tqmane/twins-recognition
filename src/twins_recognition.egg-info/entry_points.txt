@@ -1,0 +1,4 @@
+[console_scripts]
+twins-cli = twins_recognition.cli:main
+twins-gui = twins_recognition.gui:run_gui
+twins-web = twins_recognition.webapp:run

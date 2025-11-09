@@ -1,7 +1,20 @@
+Metadata-Version: 2.4
+Name: twins-recognition
+Version: 0.1.0
+Summary: Local twins/siblings/similarity recognition CLI and GUI
+Author: tqmane
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: face_recognition
+Requires-Dist: face-recognition-models
+Requires-Dist: opencv-python
+Requires-Dist: Pillow
+Requires-Dist: numpy
+Requires-Dist: dlib
+Requires-Dist: Flask
+
 # twins-recognition
 ローカルのみで動作する簡易「双子 / 兄弟 / 類似 / 異なる人物」識別ツール。
-
-👉 最短で動かすには「クイックスタート」を参照: [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
 
 ## 概要
 1枚の画像、またはフォルダ内の複数画像を処理し、各画像について検出された顔のペアの距離から以下のラベルを推定します:
@@ -18,7 +31,7 @@
 Python 3.10+ を推奨。
 
 ```
-python3 -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 `dlib` のビルドが難しい環境では `face_recognition` のインストールが失敗する場合があります。その場合は Docker を使うか、別途ビルド手順を参照してください。
@@ -27,9 +40,9 @@ python3 -m pip install -r requirements.txt
 pyproject によりパッケージ化済みなので、以下だけでコマンドが使えます:
 
 ```
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e .
+pip install -e .
 
 # CLI
 twins-cli --image path/to/photo.jpg --pretty
@@ -61,87 +74,46 @@ median_distance: 0.305
 Makefile も用意しています:
 
 ```
-make install    # .venv 作成 + python3 -m pip install -e .
+make install    # .venv 作成 + pip install -e .
 make cli        # CLIのヘルプ
 make gui        # GUI を起動
 make dev        # pytest など開発ツール導入
 make test       # テスト実行
 ```
 
-Docker で試す場合 (ホスト側にビルド環境を入れたくない場合推奨):
+Docker で試す場合:
 
 ```
 docker build -t twins-recognition .
 docker run --rm -v "$PWD":/work -w /work twins-recognition twins-cli --help
-
-# Web をコンテナで起動したい場合:
-docker run --rm -p 5000:5000 -v "$PWD":/work -w /work --entrypoint twins-web twins-recognition
 ```
 
 ## 使い方 (CLI)
 
 単一画像:
 ```
-python3 -m twins_recognition.cli --image path/to/photo.jpg --pretty
+python -m twins_recognition.cli --image path/to/photo.jpg --pretty
 ```
 
 フォルダ一括:
 ```
-python3 -m twins_recognition.cli --folder path/to/folder --pretty
+python -m twins_recognition.cli --folder path/to/folder --pretty
 ```
 
 結果をファイルへ保存:
 ```
-python3 -m twins_recognition.cli --image sample.jpg --output result.json --pretty
+python -m twins_recognition.cli --image sample.jpg --output result.json --pretty
 ```
 
 ## GUI
 
 ```
-python3 -m twins_recognition.gui
+python -m twins_recognition.gui
 ```
 ウィンドウが開いたら「画像を選択」または「フォルダを選択」で処理。結果はテーブル表示されます。
 
 対応画像形式（拡張子）: jpg, jpeg, png, bmp, webp, tif, tiff, gif, jp2, ppm, pnm, pbm, pgm
 （注: HEIC/AVIFは標準では未対応。Pillow用プラグイン導入で対応可能ですが、本ツールでは標準外です）
-
-## Web (ローカルホスト)
-
-ブラウザから複数ファイルをアップロードして解析できます。サマリーと個別一覧、サムネイル（顔枠表示）も表示されます。
-
-起動:
-```
-twins-web
-# ブラウザで http://127.0.0.1:5000 を開く
-```
-
-機能:
-- 複数画像アップロード
-- サマリー（件数・割合、距離の平均/中央値）
-- 個別一覧（ラベル/距離/顔数、元画像リンク）
-- サムネイル表示（顔枠のオーバーレイ）
-- 結果JSONのダウンロード
-- リセットボタン（結果画面から当該アップロードを削除してトップへ戻る）
-- リアルタイム解析進捗 (SSE) : アップロード後は進捗バーと現在処理中ファイル・ラベルが逐次反映
-
-補足:
-- 一時アップロードは OS のテンポラリ配下に保存され、24時間以上経過したものは自動削除します。
-- favicon は内蔵生成しており、追加設定は不要です。
- - 結果画面の「この結果をリセット」で対象バッチを即時削除できます。
- - 逐次進捗は EventSource (Server-Sent Events) を利用。長時間大量処理でもブラウザを開いたままで確認可。
-
-## クレジット / Acknowledgements
-
-このプロジェクトは以下の素晴らしいオープンソースに依存しています（敬称略）。
-
-- face_recognition / face_recognition_models（Adam Geitgey）
-- dlib（Davis E. King）
-- Pillow（PIL Fork）
-- OpenCV (opencv-python)
-- NumPy
-- Flask
-
-ライブラリのライセンスは各プロジェクトの配布条件に従います。本リポジトリは学術・個人利用シナリオでのデモを想定しています。
 
 ## 判定ロジック
 `src/twins_recognition/classifier.py` 内の `THRESHOLDS` 定数で距離境界を調整できます。

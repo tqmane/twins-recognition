@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+src/twins_recognition/__init__.py
+src/twins_recognition/classifier.py
+src/twins_recognition/cli.py
+src/twins_recognition/detector.py
+src/twins_recognition/embedding.py
+src/twins_recognition/gui.py
+src/twins_recognition/processor.py
+src/twins_recognition/webapp.py
+src/twins_recognition.egg-info/PKG-INFO
+src/twins_recognition.egg-info/SOURCES.txt
+src/twins_recognition.egg-info/dependency_links.txt
+src/twins_recognition.egg-info/entry_points.txt
+src/twins_recognition.egg-info/requires.txt
+src/twins_recognition.egg-info/top_level.txt
+tests/test_classifier.py

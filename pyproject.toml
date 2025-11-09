@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "twins-recognition"
+version = "0.1.0"
+description = "Local twins/siblings/similarity recognition CLI and GUI"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "tqmane" }]
+dependencies = [
+  "face_recognition",
+  "face-recognition-models",
+  "opencv-python",
+  "Pillow",
+  "numpy",
+  "dlib",
+  "Flask",
+]
+
+[project.scripts]
+twins-cli = "twins_recognition.cli:main"
+twins-gui = "twins_recognition.gui:run_gui"
+twins-web = "twins_recognition.webapp:run"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

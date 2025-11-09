@@ -1,0 +1,10 @@
+# オフライン実行用依存関係
+# dlib のビルドが難しい場合は代替に mediapipe + 低精度類似度計算へ切替可能
+face_recognition
+# モデルデータ（import 名は face_recognition_models, PyPI パッケージ名は face-recognition-models）
+face-recognition-models
+opencv-python
+Pillow
+numpy
+dlib
+Flask

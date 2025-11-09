@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>解析結果 - Twins Recognition</title>
+  <style>
+    body { font-family: sans-serif; margin: 1.2rem; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+    th { background: #f5f5f5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .item { border: 1px solid #ddd; padding: 0.5rem; border-radius: 6px; background: #fafafa; }
+    .item img { width: 100%; height: auto; display: block; border-radius: 4px; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; background:#333; color:#fff; }
+    .label-twins { background:#007acc; }
+    .label-siblings { background:#2b8a3e; }
+    .label-similar { background:#b8860b; }
+    .label-different { background:#c0392b; }
+    .label-single_person, .label-no_face { background:#555; }
+    .summary-box { border:1px solid #ccc; padding:0.8rem; border-radius:8px; background:#fdfdfd; }
+    .footer { margin-top:2rem; font-size:0.8rem; color:#666; }
+  </style>
+</head>
+<body>
+  <h1>解析結果</h1>
+  <div class="summary-box">
+    <h2>サマリー</h2>
+    <ul>
+      {% for label, cnt in summary.counts.items() %}
+        <li>{{ label }}: {{ cnt }} ({{ (cnt/summary.total*100)|round(1) }}%)</li>
+      {% endfor %}
+      <li>総画像枚数: {{ summary.total }}</li>
+      {% if summary.mean_distance %}<li>平均距離: {{ summary.mean_distance }}</li>{% endif %}
+      {% if summary.median_distance %}<li>中央値距離: {{ summary.median_distance }}</li>{% endif %}
+    </ul>
+    <div style="display:flex; gap:1rem; align-items:center;">
+      <a href="/">再アップロード</a>
+      <span>·</span>
+      <a href="/download/{{ batch }}.json">結果JSON</a>
+      <span>·</span>
+      <a href="/download/{{ batch }}.csv">結果CSV</a>
+      <span>·</span>
+      <form action="/reset/{{ batch }}" method="post" onsubmit="return confirm('このアップロード結果を削除してトップへ戻ります。よろしいですか？');" style="display:inline;">
+        <button type="submit">この結果をリセット</button>
+      </form>
+    </div>
+  </div>
+
+  <h2>画像一覧</h2>
+  <table>
+    <thead>
+      <tr><th>ファイル</th><th>分類</th><th>距離</th><th>顔数</th></tr>
+    </thead>
+    <tbody>
+    {% for r in results %}
+      <tr>
+        <td><a href="{{ r.relpath }}" target="_blank">{{ r.path.split('/')[-1] }}</a></td>
+        <td><span class="badge label-{{ r.classification.label }}">{{ r.classification.label }}</span></td>
+        <td>{% if r.classification.distance is not none %}{{ '%.3f'|format(r.classification.distance) }}{% else %}-{% endif %}</td>
+        <td>{{ r.faces|length }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>サムネイル</h2>
+  <div class="grid">
+    {% for r in results %}
+      <div class="item">
+        <img src="{{ r.thumb_url }}" alt="thumb" title="{{ r.classification.label }}{% if r.classification.distance is not none %} {{ '%.3f'|format(r.classification.distance) }}{% endif %} · faces={{ r.faces|length }}" />
+        <div style="margin-top:4px;">
+          <span class="badge label-{{ r.classification.label }}">{{ r.classification.label }}</span>
+          {% if r.classification.distance is not none %}<span style="font-size:0.7rem;">{{ '%.3f'|format(r.classification.distance) }}</span>{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="footer">Batch ID: {{ batch }}</div>
+</body>
+</html>
